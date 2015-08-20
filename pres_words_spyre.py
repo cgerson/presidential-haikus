@@ -184,7 +184,7 @@ class MongoExample(server.App):
         df = self.getData(params).set_index('words')
         plt_obj = df.plot(kind='bar',legend=True,secondary_y=['frequency'])
         plt_obj.set_ylabel("Frequency in texts")
-        plt_obj.tick_params(axis='both', which='major', labelsize=16)
+        plt_obj.tick_params(axis='both',which='major', labelsize=16)
         if ct > 1:
             plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
         else:

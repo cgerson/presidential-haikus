@@ -10,7 +10,7 @@ from nltk.probability import FreqDist
 from nltk.probability import MLEProbDist
 from nltk.probability import ConditionalFreqDist
 nltk.data.path.append('./nltk_data/')
-from nltk import cmudict
+from nltk.corpora import cmudict
 from nltk import bigrams
 from nltk import pos_tag
 plt.style.use('fivethirtyeight')

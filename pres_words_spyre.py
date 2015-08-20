@@ -85,7 +85,7 @@ class MongoExample(server.App):
 		     "id" : "button2",
 		     "label" : "refresh"}]
 
-    tabs = ["Plot","Table","Haiku","DrunkTopic"]
+    tabs = ["Plot","Table","Haiku","MarkovCheney"]
 
     outputs = [{ "type" : "plot",
                     "id" : "plot",
@@ -99,7 +99,7 @@ class MongoExample(server.App):
                {"type" : "html",
 		"id" : "html2",
 		"control_id" : "button2",
-		"tab" : "DrunkTopic"},
+		"tab" : "MarkovCheney"},
                {"type" : "html",
 		"id" : "html1",
 		"control_id" : "button2",
@@ -117,7 +117,10 @@ class MongoExample(server.App):
         filtered_words = []
 
         for i in self.col.aggregate(pipeline):
-            filtered_words.extend(i['text'])
+            text = i['text']
+            if '000' in text:
+                text.remove('000')
+            filtered_words.extend(text)
 
         return filtered_words
 
@@ -182,9 +185,9 @@ class MongoExample(server.App):
             speech = "Ingaugural"
             
         df = self.getData(params).set_index('words')
-        plt_obj = df.plot(kind='bar',legend=True,secondary_y=['frequency'])
+        plt_obj = df.plot(kind='bar',rot=40,legend=True,secondary_y=['frequency'])
         plt_obj.set_ylabel("Frequency in texts")
-        plt_obj.tick_params(axis='both',which='major', labelsize=16)
+        plt_obj.tick_params(axis='both', which='major', labelsize=16)
         if ct > 1:
             plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
         else:
@@ -210,7 +213,7 @@ class MongoExample(server.App):
                 word = cfdist[word].max()
             return words
 
-        result =  "<p>{0}</p>".format(" ".join(generate_model(cfd,random_word)))
+        result =  "<br>{0}<p>".format(" ".join(generate_model(cfd,random_word)))
         return result
     
     def html1(self,params):
@@ -250,11 +253,14 @@ class MongoExample(server.App):
                 if sum3 == 5:
                     break
 
-            l = ["{0} {1}".format(n1,v1),"{0} a {1} {2}".format(v2,a1,n2),"{0} {1}".format(a2,n3)]
+            if a1[0] in ['a','e','i','o','u']:
+                l = ["{0} {1}".format(n1,v1),"{0} an {1} {2}".format(v2,a1,n2),"{0} {1}".format(a2,n3)]
+            else:
+                l = ["{0} {1}".format(n1,v1),"{0} a {1} {2}".format(v2,a1,n2),"{0} {1}".format(a2,n3)]
             return l
 
         haiku = makeHaiku()
-        return "<p>".join(haiku)
+        return "<br>{0}".format("<br><p>".join(haiku))
 
     def nsyl(self,w): #count syllables
         try: 

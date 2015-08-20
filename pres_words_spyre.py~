@@ -1,0 +1,221 @@
+from spyre import server #spyre
+
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+from pymongo import MongoClient
+import re
+import numpy as np
+import seaborn as sns
+from nltk.tokenize import RegexpTokenizer
+from collections import Counter
+from nltk.corpus import stopwords
+
+class MongoExample(server.App):
+
+    title = "Presidential Documents- Analysis"
+
+    inputs = [{     "type":'dropdown',
+                    "label": 'President', 
+                    "options" : [ {"label": "Barack Obama", "value":"Barack Obama"},
+                                  {"label": "George W. Bush", "value":"George W. Bush"},
+                                  {"label": "Bill Clinton", "value":"William J. Clinton"},
+                                  {"label": "Ronald Reagan", "value":"Ronald Reagan"}],
+                    "key": 'president', #refer here for value chosen above
+                    "action_id": "update_data"},
+              {     "type":'dropdown',
+                    "label": 'Speech', 
+                    "options" : [ {"label": "State of the Union", "value":"SOU"},
+                                  {"label": "Inaugural Address", "value":"Inaugurals"}],
+                    "key": 'speech', #refer here for value chosen above
+                    "action_id": "update_data"}]
+              
+
+    controls = [{   "type" : "hidden",
+                    "id" : "update_data"}]
+
+    tabs = ["Plot", "Table"]
+
+    outputs = [{ "type" : "plot",
+                    "id" : "plot",
+                    "control_id" : "update_data",
+                    "tab" : "Plot"},
+                { "type" : "table",
+                    "id" : "table_id",
+                    "control_id" : "update_data",
+                    "tab" : "Table",
+                    "on_page_load" : True }]
+
+    def noOutput(self,params):
+        """ """
+        client = MongoClient(host="54.69.198.239",port=27017)
+        self.president = params['president']
+        self.speech = params['speech']
+
+        self.col = client.Presidents.Docs
+
+    def getData(self,params):
+        self.noOutput(params)
+        pipeline = [{"$match": {"name":self.president, "type":self.speech}},
+                    {"$project": {"words": "$filtered_speech", "date":"$date"}}]
+
+        tokenizer = RegexpTokenizer(r'\w+')
+        
+        words = []
+
+        for i in self.col.aggregate(pipeline):
+            #t = self.expandContractions(i['text'].lower())
+            #tokens = tokenizer.tokenize(t)
+            #filtered_words = filter(lambda token: token not in stopwords.words('english'), tokens)
+            #words.extend(filtered_words)
+            words.extend(i['words'])
+                
+        counter = Counter(words)
+        max_freq = counter.most_common(10)
+
+        df = pd.DataFrame(max_freq)
+        df.columns = ['word','count']
+        return df
+
+    def getPlot(self, params):
+        df = self.getData(params).set_index('word')
+        plt_obj = df.plot(kind='bar',rot=45,legend=False)
+        plt_obj.set_ylabel("Frequency in texts")
+        plt_obj.set_title(self.president)
+        fig = plt_obj.get_figure()
+        return fig
+    
+    def expandContractions(self,speech):
+        cList = {
+  "ain't": "am not",
+  "aren't": "are not",
+  "can't": "cannot",
+  "can't've": "cannot have",
+  "'cause": "because",
+  "could've": "could have",
+  "couldn't": "could not",
+  "couldn't've": "could not have",
+  "didn't": "did not",
+  "doesn't": "does not",
+  "don't": "do not",
+  "hadn't": "had not",
+  "hadn't've": "had not have",
+  "hasn't": "has not",
+  "haven't": "have not",
+  "he'd": "he would",
+  "he'd've": "he would have",
+  "he'll": "he will",
+  "he'll've": "he will have",
+  "he's": "he is",
+  "how'd": "how did",
+  "how'd'y": "how do you",
+  "how'll": "how will",
+  "how's": "how is",
+  "i'd": "i would",
+  "i'd've": "i would have",
+  "i'll": "i will",
+  "i'll've": "i will have",
+  "i'm": "i am",
+  "i've": "i have",
+  "isn't": "is not",
+  "it'd": "it had",
+  "it'd've": "it would have",
+  "it'll": "it will",
+  "it'll've": "it will have",
+  "it's": "it is",
+  "let's": "let us",
+  "ma'am": "madam",
+  "mayn't": "may not",
+  "might've": "might have",
+  "mightn't": "might not",
+  "mightn't've": "might not have",
+  "must've": "must have",
+  "mustn't": "must not",
+  "mustn't've": "must not have",
+  "needn't": "need not",
+  "needn't've": "need not have",
+  "o'clock": "of the clock",
+  "oughtn't": "ought not",
+  "oughtn't've": "ought not have",
+  "shan't": "shall not",
+  "sha'n't": "shall not",
+  "shan't've": "shall not have",
+  "she'd": "she would",
+  "she'd've": "she would have",
+  "she'll": "she will",
+  "she'll've": "she will have",
+  "she's": "she is",
+  "should've": "should have",
+  "shouldn't": "should not",
+  "shouldn't've": "should not have",
+  "so've": "so have",
+  "so's": "so is",
+  "that'd": "that would",
+  "that'd've": "that would have",
+  "that's": "that is",
+  "there'd": "there had",
+  "there'd've": "there would have",
+  "there's": "there is",
+  "they'd": "they would",
+  "they'd've": "they would have",
+  "they'll": "they will",
+  "they'll've": "they will have",
+  "they're": "they are",
+  "they've": "they have",
+  "to've": "to have",
+  "wasn't": "was not",
+  "we'd": "we had",
+  "we'd've": "we would have",
+  "we'll": "we will",
+  "we'll've": "we will have",
+  "we're": "we are",
+  "we've": "we have",
+  "weren't": "were not",
+  "what'll": "what will",
+  "what'll've": "what will have",
+  "what're": "what are",
+  "what's": "what is",
+  "what've": "what have",
+  "when's": "when is",
+  "when've": "when have",
+  "where'd": "where did",
+  "where's": "where is",
+  "where've": "where have",
+  "who'll": "who will",
+  "who'll've": "who will have",
+  "who's": "who is",
+  "who've": "who have",
+  "why's": "why is",
+  "why've": "why have",
+  "will've": "will have",
+  "won't": "will not",
+  "won't've": "will not have",
+  "would've": "would have",
+  "wouldn't": "would not",
+  "wouldn't've": "would not have",
+  "y'all": "you all",
+  "y'alls": "you alls",
+  "y'all'd": "you all would",
+  "y'all'd've": "you all would have",
+  "y'all're": "you all are",
+  "y'all've": "you all have",
+  "you'd": "you had",
+  "you'd've": "you would have",
+  "you'll": "you you will",
+  "you'll've": "you you will have",
+  "you're": "you are",
+  "you've": "you have"}
+        
+        c_re = re.compile('(%s)' % '|'.join(cList.keys()))
+
+        def expandContractionsHelper(text, c_re=c_re):
+            def replace(match):
+                return cList[match.group(0)]
+            return c_re.sub(replace, text)
+
+        return expandContractionsHelper(speech)
+
+if __name__ == '__main__':
+    app = MongoExample()
+    app.launch(port=8000)
+    #app.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))

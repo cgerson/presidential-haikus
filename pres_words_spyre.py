@@ -5,14 +5,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pymongo import MongoClient
 import numpy as np
-import seaborn as sns
+import nltk
 from nltk.probability import FreqDist
 from nltk.probability import MLEProbDist
 from nltk.probability import ConditionalFreqDist
-from nltk import bigrams
+nltk.data.path.append('./nltk_data/')
 from nltk.corpus import cmudict
+from nltk import bigrams
 from nltk import pos_tag
-
+plt.style.use('fivethirtyeight')
 
 class MongoExample(server.App):
 
@@ -181,13 +182,15 @@ class MongoExample(server.App):
             speech = "Ingaugural"
             
         df = self.getData(params).set_index('words')
-        plt_obj = df.plot(kind='bar',rot=45,legend=True,secondary_y=['frequency'])
+        plt_obj = df.plot(kind='bar',legend=True,secondary_y=['frequency'])
         plt_obj.set_ylabel("Frequency in texts")
+        plt_obj.tick_params(axis='both', which='major', labelsize=16)
         if ct > 1:
             plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
         else:
             plt_obj.set_title("{0}: {1} {2} speech".format(self.president,ct,speech))
         fig = plt_obj.get_figure()
+        fig.set_size_inches(18.5, 10.5)
         return fig
 
     def html2(self,params):

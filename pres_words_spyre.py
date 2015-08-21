@@ -231,9 +231,14 @@ class MongoExample(server.App):
         #zipped_cert = zip(dates,sent_cert,phrase_cert)
         #zipped_cert.sort()
 
-        df = pd.read_csv("./certainty_index.csv")
+        if speech == "SOU":
+            df = pd.read_csv("./certainty_index.csv")
+        else:
+            df = pd.read_csv("./certainty_index_inaug.csv")
+
         if president!="All presidents":
             df = df[df['president']==president]
+            
         df.columns=['date','certainty(by_sent)','certainty(by_clause)','president']
         #df = pd.DataFrame(zipped_cert,columns=['date','certainty(by_sent)','certainty(by_clause)']) #column names no spaces!
         return df[['date','certainty(by_sent)','certainty(by_clause)']]

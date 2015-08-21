@@ -14,6 +14,7 @@ from nltk.corpus import cmudict
 from nltk import bigrams
 from nltk import pos_tag
 plt.style.use('fivethirtyeight')
+from datetime import datetime
 
 class MongoExample(server.App):
 
@@ -26,7 +27,8 @@ class MongoExample(server.App):
 
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
-                    "options" : [{"label": "Abraham Lincoln", "value":"Abraham Lincoln"},
+                    "options" : [{"label": "All presidents", "value":"All presidents"},
+                                 {"label": "Abraham Lincoln", "value":"Abraham Lincoln"},
                                  {"label": "Andrew Jackson", "value":"Andrew Jackson"},
                                  {"label": "Andrew Johnson", "value":"Andrew Johnson"},
                                  {"label": "Barack Obama", "value":"Barack Obama"},
@@ -85,16 +87,16 @@ class MongoExample(server.App):
 		     "id" : "button2",
 		     "label" : "refresh"}]
 
-    tabs = ["Plot","Table","Haiku","MarkovCheney"]
+    tabs = ["CertaintyIndex","PlotWords","TableWords","Haiku","MarkovCheney","About"]
 
     outputs = [{ "type" : "plot",
-                    "id" : "plot",
+                    "id" : "plot1",
                     "control_id" : "update_data",
-                    "tab" : "Plot"},
+                    "tab" : "PlotWords"},
                 { "type" : "table",
                     "id" : "table_id",
                     "control_id" : "update_data",
-                    "tab" : "Table"},
+                    "tab" : "TableWords"},
                {"type" : "html",
 		"id" : "html2",
 		"control_id" : "button2",
@@ -102,25 +104,39 @@ class MongoExample(server.App):
                {"type" : "html",
 		"id" : "html1",
 		"control_id" : "button2",
-		"tab" : "Haiku"}]
+		"tab" : "Haiku"},
+               {"type" : "plot",
+		"id" : "plot2",
+		"control_id" : "update_data",
+		"tab" : "CertaintyIndex"},
+               {"type" : "html",
+		"id" : "html3",
+		"control_id" : "update_data",
+		"tab" : "About"}]
 
     def loadData(self,params):
         """return filtered words according to inputs"""
         
         self.president = params['president']
         self.speech = params['speech']
-        
-        pipeline = [{"$match": {"name":self.president, "type":self.speech}},
+
+        if self.president=="All presidents":
+            pipeline = [{"$match": {"type":self.speech}},
+                    {"$project": {"text": "$filtered_speech", "date":"$date"}}]
+        else:
+             pipeline = [{"$match": {"name":self.president, "type":self.speech}},
                     {"$project": {"text": "$filtered_speech", "date":"$date"}}]
 
         filtered_words = []
 
         for i in self.col.aggregate(pipeline):
             text = i['text']
-            if '000' in text:
-                text.remove('000')
             filtered_words.extend(text)
 
+        if '000' in filtered_words:
+            filtered_words.remove('000')
+        if '--' in filtered_words:
+            filtered_words.remove('--')
         return filtered_words
 
     def fDist(self,filtered_words):
@@ -136,9 +152,15 @@ class MongoExample(server.App):
         
         self.president = params['president']
         self.speech = params['speech']
-        
-        pipeline_ct = [{"$match":{"name":self.president,"type":self.speech}},{"$group":{"_id":"type",
+
+        if self.president=="All presidents":
+            pipeline_ct = [{"$match":{"type":self.speech}},{"$group":{"_id":"type",
                                                               "count":{"$sum":1}}}]
+        else:
+            pipeline_ct = [{"$match":{"name":self.president,"type":self.speech}},{"$group":{"_id":"type",
+                                                              "count":{"$sum":1}}}]
+
+        ct = 0    
         for i in self.col.aggregate(pipeline_ct):
             ct = i['count']
 
@@ -148,8 +170,12 @@ class MongoExample(server.App):
         """return conditional freq distribution using filtered_words from loadData"""
         president = params['president']
         speech = params['speech']
-        
-        pipeline = [{"$match": {"name":president, "type":speech}},
+
+        if self.president=="All presidents":
+            pipeline = [{"$match": {"type":speech}},
+                    {"$project": {"tags": "$filtered_speech_tags"}}]
+        else:
+            pipeline = [{"$match": {"name":president, "type":speech}},
                     {"$project": {"tags": "$filtered_speech_tags"}}]
 
         tags = []
@@ -177,7 +203,39 @@ class MongoExample(server.App):
         df.columns = ['words','count','frequency']
         return df
 
-    def getPlot(self, params):
+    def certaintyInd(self,params):
+        """returns dataframe of modality scores"""
+        
+        president = params['president']
+        speech = params['speech']
+        if president == "All presidents":
+            pipeline = [{"$match":{"type":speech}},
+            {"$project": {"cert_sent":"$certainty","cert_phrases":"$certainty_phrases",
+           "date":"$date","president":"$name"}}]
+        else:
+            pipeline = [{"$match":{"name":president,"type":speech}},
+            {"$project": {"cert_sent":"$certainty","cert_phrases":"$certainty_phrases",
+           "date":"$date","president":"$name"}}]
+
+        sent_cert = []
+        phrase_cert = []
+        dates = []
+        names = []
+
+        for i in self.col.aggregate(pipeline):
+            sent_cert.append(i['cert_sent'])
+            phrase_cert.append(i['cert_phrases'])
+            names.append(i['president'])
+            date = datetime.strptime(str(i['date']),"%B %d, %Y")
+            dates.append(date)
+
+        zipped_cert = zip(dates,sent_cert,phrase_cert)
+        zipped_cert.sort()
+
+        df = pd.DataFrame(zipped_cert,columns=['date','certainty(by_sent)','certainty(by_clause)']) #column names no spaces!
+        return df
+        
+    def plot1(self, params):
         ct = self.speechCt(params)
         speech = params['speech']
         if speech == "Inaugurals":
@@ -195,6 +253,24 @@ class MongoExample(server.App):
         fig.set_size_inches(18.5, 10.5)
         return fig
 
+    def plot2(self,params):
+        ct = self.speechCt(params)
+        speech = params['speech']
+        if speech == "Inaugurals":
+            speech = "Inaugural"
+
+        df = self.certaintyInd(params).set_index('date')
+        plt_obj = df.plot(legend=True,marker='o',ylim=(-1.0,1.0))
+        plt_obj.set_ylabel("Modality (measured between -1.0 & 1.0)")
+        plt_obj.tick_params(axis='both', which='major', labelsize=16)
+        if ct > 1:
+            plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
+        else:
+            plt_obj.set_title("{0}: {1} {2} speech".format(self.president,ct,speech))
+        fig = plt_obj.get_figure()
+        fig.set_size_inches(18.5, 10.5)
+        return fig
+        
     def html2(self,params):
         filtered_words = self.loadData(params)
         fdist = self.fDist(filtered_words)
@@ -212,7 +288,7 @@ class MongoExample(server.App):
                 word = cfdist[word].max()
             return words
 
-        result =  "<br>{0}<p>".format(" ".join(generate_model(cfd,random_word)))
+        result =  '<br>Tell us, {1}:<br><br>"{0}."<p>'.format(" ".join(generate_model(cfd,random_word)),self.president.split()[0])
         return result
     
     def html1(self,params):
@@ -267,7 +343,10 @@ class MongoExample(server.App):
         except:
             result = [8] #so that it exceeds syllable limit and starts over
         return result
-    
+
+    def html3(self,params):
+        return "<br>On this site you can find: <ul><li>a plot measuring the average 'certainty index' (degree of reliability of expressed information, also referred to as the modality) of a given speeches,</li><li>frequency counts in plot and table form of the most common words in given speeches,</li><li>Haikus composed of the most common words in given speeches, and</li><li>a Markov chain composed of the most common phrases in given speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>."
+        
 if __name__ == '__main__':
     app = MongoExample()
     #app.launch(port=8000)

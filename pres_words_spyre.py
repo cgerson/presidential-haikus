@@ -13,8 +13,7 @@ nltk.data.path.append('./nltk_data/')
 from nltk.corpus import cmudict
 from nltk import bigrams
 from nltk import pos_tag
-plt.style.use('fivethirtyeight')
-from datetime import datetime
+plt.style.use('bmh')
 
 class MongoExample(server.App):
 
@@ -217,24 +216,10 @@ class MongoExample(server.App):
             {"$project": {"cert_sent":"$certainty","cert_phrases":"$certainty_phrases",
            "date":"$date"}}]
 
-        #sent_cert = []
-        #phrase_cert = []
-        #dates = []
-        #names = []
-
-        #for i in self.col.aggregate(pipeline):
-        #    sent_cert.append(i['cert_sent'])
-        #    phrase_cert.append(i['cert_phrases'])
-        #    date = datetime.strptime(str(i['date']),"%B %d, %Y")
-        #    dates.append(date)
-
-        #zipped_cert = zip(dates,sent_cert,phrase_cert)
-        #zipped_cert.sort()
-
         if speech == "SOU":
-            df = pd.read_csv("./certainty_index.csv")
+            df = pd.read_csv("./certainty_index.csv",parse_dates=True)
         else:
-            df = pd.read_csv("./certainty_index_inaug.csv")
+            df = pd.read_csv("./certainty_index_inaug.csv",parse_dates=True)
 
         if president!="All presidents":
             df = df[df['president']==president]
@@ -268,16 +253,23 @@ class MongoExample(server.App):
             speech = "Inaugural"
 
         df = self.certaintyInd(params).set_index('date')
-        plt_obj = df.plot(legend=True,marker='o',ylim=(-1.0,1.0))
+        plt_obj = df.plot(legend=True,marker='o',ylim=(-1.0,1.0),rot=20)
         plt_obj.set_ylabel("Modality (measured between -1.0 & 1.0)")
         plt_obj.tick_params(axis='both', which='major', labelsize=16)
         if ct > 1:
             plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
         else:
             plt_obj.set_title("{0}: {1} {2} speech".format(self.president,ct,speech))
+
+        #formatter = DateFormatter('%Y-%m-%d')
+        #plt_obj.gcf().axes.xaxis.set_major_formatter(formatter)
+        #ax = plt_obj.gca()
+        #plt_obj.gca().xaxis.set_major_locator(MaxNLocator(prune='lower'))
+        
         fig = plt_obj.get_figure()
         fig.set_size_inches(18.5, 10.5)
-        fig.autofmt_xdate()
+
+        #fig.autofmt_xdate()
         return fig
         
     def html2(self,params):

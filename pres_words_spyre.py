@@ -94,8 +94,7 @@ class MongoExample(server.App):
                 { "type" : "table",
                     "id" : "table_id",
                     "control_id" : "update_data",
-                    "tab" : "Table",
-                    "on_page_load" : True },
+                    "tab" : "Table"},
                {"type" : "html",
 		"id" : "html2",
 		"control_id" : "button2",
@@ -112,7 +111,7 @@ class MongoExample(server.App):
         self.speech = params['speech']
         
         pipeline = [{"$match": {"name":self.president, "type":self.speech}},
-                    {"$project": {"text": "$filtered_speech", "date":"$date"}},{"$limit":1}]
+                    {"$project": {"text": "$filtered_speech", "date":"$date"}}]
 
         filtered_words = []
 
@@ -151,7 +150,7 @@ class MongoExample(server.App):
         speech = params['speech']
         
         pipeline = [{"$match": {"name":president, "type":speech}},
-                    {"$project": {"tags": "$filtered_speech_tags"}},{"$limit":1}]
+                    {"$project": {"tags": "$filtered_speech_tags"}}]
 
         tags = []
         for i in self.col.aggregate(pipeline):
@@ -182,7 +181,7 @@ class MongoExample(server.App):
         ct = self.speechCt(params)
         speech = params['speech']
         if speech == "Inaugurals":
-            speech = "Ingaugural"
+            speech = "Inaugural"
             
         df = self.getData(params).set_index('words')
         plt_obj = df.plot(kind='bar',rot=40,legend=True,secondary_y=['frequency'])

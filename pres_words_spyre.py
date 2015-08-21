@@ -211,29 +211,32 @@ class MongoExample(server.App):
         if president == "All presidents":
             pipeline = [{"$match":{"type":speech}},
             {"$project": {"cert_sent":"$certainty","cert_phrases":"$certainty_phrases",
-           "date":"$date","president":"$name"}}]
+           "date":"$date"}}]
         else:
             pipeline = [{"$match":{"name":president,"type":speech}},
             {"$project": {"cert_sent":"$certainty","cert_phrases":"$certainty_phrases",
-           "date":"$date","president":"$name"}}]
+           "date":"$date"}}]
 
-        sent_cert = []
-        phrase_cert = []
-        dates = []
-        names = []
+        #sent_cert = []
+        #phrase_cert = []
+        #dates = []
+        #names = []
 
-        for i in self.col.aggregate(pipeline):
-            sent_cert.append(i['cert_sent'])
-            phrase_cert.append(i['cert_phrases'])
-            names.append(i['president'])
-            date = datetime.strptime(str(i['date']),"%B %d, %Y")
-            dates.append(date)
+        #for i in self.col.aggregate(pipeline):
+        #    sent_cert.append(i['cert_sent'])
+        #    phrase_cert.append(i['cert_phrases'])
+        #    date = datetime.strptime(str(i['date']),"%B %d, %Y")
+        #    dates.append(date)
 
-        zipped_cert = zip(dates,sent_cert,phrase_cert)
-        zipped_cert.sort()
+        #zipped_cert = zip(dates,sent_cert,phrase_cert)
+        #zipped_cert.sort()
 
-        df = pd.DataFrame(zipped_cert,columns=['date','certainty(by_sent)','certainty(by_clause)']) #column names no spaces!
-        return df
+        df = pd.read_csv("certainty_index.csv")
+        if president!="All presidents":
+            df = df[df['president']==president]
+        df.columns=['date','certainty(by_sent)','certainty(by_clause)','president']
+        #df = pd.DataFrame(zipped_cert,columns=['date','certainty(by_sent)','certainty(by_clause)']) #column names no spaces!
+        return df[['date','certainty(by_sent)','certainty(by_clause']]
         
     def plot1(self, params):
         ct = self.speechCt(params)

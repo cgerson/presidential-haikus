@@ -31,7 +31,7 @@ class MongoExample(server.App):
                                  {"label": "Abraham Lincoln", "value":"Abraham Lincoln"},
                                  {"label": "Andrew Jackson", "value":"Andrew Jackson"},
                                  {"label": "Andrew Johnson", "value":"Andrew Johnson"},
-                                 {"label": "Barack Obama", "value":"Barack Obama"},
+                                 {"label": "Barack Obama", "value":"Barack Obama","checked":True},
                                  {"label": "Benjamin Harrison", "value":"Benjamin Harrison"},
                                  {"label": "Bill Clinton", "value":"William J. Clinton"},
                                  {"label": "Calvin Coolidge", "value":"Calvin Coolidge"},
@@ -345,7 +345,7 @@ class MongoExample(server.App):
         return result
 
     def html3(self,params):
-        return "<br>On this site you can find: <ul><li>a plot measuring the average 'certainty index' (degree of reliability of expressed information, also referred to as the modality) of a given speeches,</li><li>frequency counts in plot and table form of the most common words in given speeches,</li><li>Haikus composed of the most common words in given speeches, and</li><li>a Markov chain composed of the most common phrases in given speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>."
+        return "<br>On this site you can find: <ul><li>a plot measuring the average 'certainty index' (degree of reliability of expressed information, also referred to as the modality) of given speeches,</li><li>frequency counts in plot and table form of the most common words in given speeches,</li><li>Haikus composed of the most common words in given speeches, and</li><li>a Markov chain composed of the most common phrases in given speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>."
         
 if __name__ == '__main__':
     app = MongoExample()

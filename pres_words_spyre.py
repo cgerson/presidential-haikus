@@ -13,7 +13,7 @@ nltk.data.path.append('./nltk_data/')
 from nltk.corpus import cmudict
 from nltk import bigrams
 from nltk import pos_tag
-plt.style.use('bmh')
+plt.style.use('fivethirtyeight')
 
 class MongoExample(server.App):
 
@@ -23,7 +23,7 @@ class MongoExample(server.App):
         self.d = cmudict.dict()
     
     title = "Presidential Documents- Analysis"
-
+    
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
                     "options" : [{"label": "All presidents", "value":"All presidents"},
@@ -84,7 +84,7 @@ class MongoExample(server.App):
                     "id" : "update_data"},
                 {    "type" : "button",
 		     "id" : "button2",
-		     "label" : "refresh"}]
+		     "label" : "refresh poetry"}]
 
     tabs = ["CertaintyIndex","PlotWords","TableWords","Haiku","MarkovCheney","About"]
 
@@ -113,6 +113,9 @@ class MongoExample(server.App):
 		"control_id" : "update_data",
 		"tab" : "About"}]
 
+    def getGif(self,params):
+        return "President_Barack_Obama_net1.gif"
+        
     def loadData(self,params):
         """return filtered words according to inputs"""
         
@@ -235,7 +238,8 @@ class MongoExample(server.App):
             speech = "Inaugural"
             
         df = self.getData(params).set_index('words')
-        plt_obj = df.plot(kind='bar',rot=40,legend=True,secondary_y=['frequency'])
+        df.sort(columns=['frequency'],ascending=True,inplace=True)
+        plt_obj = df[['frequency']].plot(kind='barh',legend=True)
         plt_obj.set_ylabel("Frequency in texts")
         plt_obj.tick_params(axis='both', which='major', labelsize=16)
         if ct > 1:
@@ -253,9 +257,9 @@ class MongoExample(server.App):
             speech = "Inaugural"
 
         df = self.certaintyInd(params).set_index('date')
-        plt_obj = df.plot(legend=True,marker='o',ylim=(-1.0,1.0),rot=20)
+        plt_obj = df.plot(legend=True,marker='o',ylim=(-1.0,1.0))
         plt_obj.set_ylabel("Modality (measured between -1.0 & 1.0)")
-        plt_obj.tick_params(axis='both', which='major', labelsize=16)
+        plt_obj.tick_params(axis='both', which='major', labelsize=16,pad=10)
         if ct > 1:
             plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
         else:

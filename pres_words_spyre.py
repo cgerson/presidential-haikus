@@ -277,6 +277,7 @@ class MongoExample(server.App):
             plt_obj.set_title("{0}: {1} {2} speech".format(self.president,ct,speech))
         fig = plt_obj.get_figure()
         fig.set_size_inches(18.5, 10.5)
+        fig.autofmt_xdate()
         return fig
         
     def html2(self,params):

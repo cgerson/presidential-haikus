@@ -23,6 +23,8 @@ class MongoExample(server.App):
         self.d = cmudict.dict()
     
     title = "Presidential Documents- Analysis"
+
+    gif = "President_Barack_Obama_net1.gif"
     
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
@@ -74,8 +76,8 @@ class MongoExample(server.App):
                     "action_id": "update_data"},
               {     "type":'radiobuttons',
                     "label": 'Speech', 
-                    "options" : [ {"label": "State of the Union", "value":"SOU","checked":True},
-                                  {"label": "Inaugural Address", "value":"Inaugurals"}],
+                    "options" : [ {"label": "Inaugural Address", "value":"Inaugurals","checked":True},
+                                  {"label": "State of the Union", "value":"SOU"}],
                     "key": 'speech', #refer here for value chosen above
                     "action_id": "update_data"}]
               
@@ -113,8 +115,6 @@ class MongoExample(server.App):
 		"control_id" : "update_data",
 		"tab" : "About"}]
 
-    def getGif(self,params):
-        return "President_Barack_Obama_net1.gif"
         
     def loadData(self,params):
         """return filtered words according to inputs"""
@@ -234,8 +234,8 @@ class MongoExample(server.App):
     def plot1(self, params):
         ct = self.speechCt(params)
         speech = params['speech']
-        if speech == "Inaugurals":
-            speech = "Inaugural"
+        #if speech == "Inaugurals":
+        #    speech = "Inaugural"
             
         df = self.getData(params).set_index('words')
         df.sort(columns=['frequency'],ascending=True,inplace=True)
@@ -293,8 +293,16 @@ class MongoExample(server.App):
                 word = cfdist[word].max()
             return words
 
-        result =  '<br>Tell us, {1}:<br><br>"{0}."<p>'.format(" ".join(generate_model(cfd,random_word)),self.president.split()[0])
-        return result
+        html = '''
+        <style>
+            body {
+                background-image: url("http://www.ria-ausa.org/wp-content/upLoads/2013/08/USA-American-Flag-Abstract-Wallpaper-HD.png");
+            }
+        </style>
+        <br>Tell us, '''+self.president.split()[0]+''':<br><br><p>'''+"&nbsp;&nbsp;&nbsp;".join(generate_model(cfd,random_word))+'''<br>'''
+
+        #<br>'Tell us, {1}:<br><br>"{0}."<p>'.format(" ".join(generate_model(cfd,random_word)),self.president.split()[0])
+        return html
     
     def html1(self,params):
         VB,NN,JJ = self.cDist(params)
@@ -350,7 +358,7 @@ class MongoExample(server.App):
         return result
 
     def html3(self,params):
-        return "<br>On this site you can find: <ul><li>a plot measuring the average 'certainty index' (degree of reliability of expressed information, also referred to as the modality) of given speeches,</li><li>frequency counts in plot and table form of the most common words in given speeches,</li><li>Haikus composed of the most common words in given speeches, and</li><li>a Markov chain composed of the most common phrases in given speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>."
+        return "<br>On this site you can find:<br><ul><li>a plot measuring the average 'certainty index' (degree of reliability of expressed information, also referred to as the modality) of given speeches,</li><li>frequency counts in plot and table form of the most common words in given speeches,</li><li>Haikus composed of the most common words in given speeches, and</li><li>a Markov chain composed of the most common phrases in given speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>."
         
 if __name__ == '__main__':
     app = MongoExample()

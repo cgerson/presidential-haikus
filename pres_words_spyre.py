@@ -15,12 +15,12 @@ from nltk import bigrams
 from nltk import pos_tag
 plt.style.use('fivethirtyeight')
 
-class MongoExample(server.App):
+class PresApp(server.App):
 
     def __init__(self):
-        client = MongoClient(host="54.69.198.239",port=27017)
-        self.col = client.Presidents.Docs
-        self.d = cmudict.dict()
+        client = MongoClient(host="54.69.198.239",port=27017) #connect to Mongodb
+        self.col = client.Presidents.Docs #collection of presidential speeches
+        self.d = cmudict.dict() #pronunciation dictionary
     
     title = "Presidential Documents- Analysis"
 
@@ -72,13 +72,13 @@ class MongoExample(server.App):
                                   {"label": "William McKinley", "value":"William McKinley"},
                                   {"label": "Woodrow Wilson", "value":"Woodrow Wilson"},
                                   {"label": "Zachary Taylor", "value":"Zachary Taylor"}],
-                    "key": 'president', #refer here for value chosen above
+                    "key": 'president',
                     "action_id": "update_data"},
               {     "type":'radiobuttons',
                     "label": 'Speech', 
-                    "options" : [ {"label": "Inaugural Address", "value":"Inaugurals","checked":True},
-                                  {"label": "State of the Union", "value":"SOU"}],
-                    "key": 'speech', #refer here for value chosen above
+                    "options" : [ {"label": "State of the Union", "value":"SOU","checked":True},
+                                  {"label": "Inaugural Address", "value":"Inaugurals"}],
+                    "key": 'speech',
                     "action_id": "update_data"}]
               
 
@@ -88,7 +88,7 @@ class MongoExample(server.App):
 		     "id" : "button2",
 		     "label" : "refresh poetry"}]
 
-    tabs = ["CertaintyIndex","PlotWords","TableWords","Haiku","MarkovCheney","About"]
+    tabs = ["PlotWords","TableWords","Haiku","MarkovCheney","About"]
 
     outputs = [{ "type" : "plot",
                     "id" : "plot1",
@@ -106,10 +106,6 @@ class MongoExample(server.App):
 		"id" : "html1",
 		"control_id" : "button2",
 		"tab" : "Haiku"},
-               {"type" : "plot",
-		"id" : "plot2",
-		"control_id" : "update_data",
-		"tab" : "CertaintyIndex"},
                {"type" : "html",
 		"id" : "html3",
 		"control_id" : "update_data",
@@ -135,6 +131,7 @@ class MongoExample(server.App):
             text = i['text']
             filtered_words.extend(text)
 
+        
         if '000' in filtered_words:
             filtered_words.remove('000')
         if '--' in filtered_words:
@@ -196,6 +193,8 @@ class MongoExample(server.App):
         return VB,NN,JJ
     
     def getData(self,params):
+        """return pandas dataframe of most common words in speeches"""
+        
         fdist = self.fDist(self.loadData(params))
         max_freq = fdist.most_common(20)
         words_unzipped,count_unzipped = zip(*max_freq)
@@ -228,10 +227,11 @@ class MongoExample(server.App):
             df = df[df['president']==president]
             
         df.columns=['date','certainty(by_sent)','certainty(by_clause)','president']
-        #df = pd.DataFrame(zipped_cert,columns=['date','certainty(by_sent)','certainty(by_clause)']) #column names no spaces!
         return df[['date','certainty(by_sent)','certainty(by_clause)']]
         
     def plot1(self, params):
+        """return matplotlib figure of word frequency"""
+        
         ct = self.speechCt(params)
         speech = params['speech']
         #if speech == "Inaugurals":
@@ -251,6 +251,8 @@ class MongoExample(server.App):
         return fig
 
     def plot2(self,params):
+        """return matplotlib figure of certainty index"""
+        
         ct = self.speechCt(params)
         speech = params['speech']
         if speech == "Inaugurals":
@@ -264,19 +266,15 @@ class MongoExample(server.App):
             plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
         else:
             plt_obj.set_title("{0}: {1} {2} speech".format(self.president,ct,speech))
-
-        #formatter = DateFormatter('%Y-%m-%d')
-        #plt_obj.gcf().axes.xaxis.set_major_formatter(formatter)
-        #ax = plt_obj.gca()
-        #plt_obj.gca().xaxis.set_major_locator(MaxNLocator(prune='lower'))
         
         fig = plt_obj.get_figure()
         fig.set_size_inches(18.5, 10.5)
 
-        #fig.autofmt_xdate()
         return fig
         
     def html2(self,params):
+        """return Markov chain string made fom words in selected speeches"""
+        
         filtered_words = self.loadData(params)
         fdist = self.fDist(filtered_words)
         
@@ -293,18 +291,12 @@ class MongoExample(server.App):
                 word = cfdist[word].max()
             return words
 
-        html = '''
-        <style>
-            body {
-                background-image: url("http://www.ria-ausa.org/wp-content/upLoads/2013/08/USA-American-Flag-Abstract-Wallpaper-HD.png");
-            }
-        </style>
-        <br>Tell us, '''+self.president.split()[0]+''':<br><br><p>'''+"&nbsp;&nbsp;".join(generate_model(cfd,random_word))+'''<br>'''
-
-        #<br>'Tell us, {1}:<br><br>"{0}."<p>'.format(" ".join(generate_model(cfd,random_word)),self.president.split()[0])
+        html = "<br><p>{1}'s Ramblings:<br><br>{0}.<p>".format(" ".join(generate_model(cfd,random_word)),self.president.split()[0])
         return html
     
     def html1(self,params):
+        """return Haiku string made from selected speeches"""
+        
         VB,NN,JJ = self.cDist(params)
         
         def makeHaiku():    
@@ -330,10 +322,10 @@ class MongoExample(server.App):
                 sum1 = sumSyl(n1,v1)
                 if sum1 == 5:
                     break
-            while sum2!=7:
+            while sum2!=6: #because we'll add an article later on to the second line
                 v2,a1,n2 = generateLine(2)
                 sum2= sumSyl(v2,a1,n2)
-                if sum2 == 7:
+                if sum2 == 6:
                     break
             while sum3!=5:
                 a2,n3 = generateLine(3)
@@ -348,9 +340,11 @@ class MongoExample(server.App):
             return l
 
         haiku = makeHaiku()
-        return "<br>{0}".format("<br><p>".join(haiku))
+        return "<br><p>{0}".format("<br><p>".join(haiku))
 
-    def nsyl(self,w): #count syllables
+    def nsyl(self,w):
+        """return syllabel count for given word"""
+        
         try: 
             result = [len(list(y for y in x if y[-1].isdigit())) for x in self.d[w]]
         except:
@@ -358,16 +352,17 @@ class MongoExample(server.App):
         return result
 
     def html3(self,params):
+        """return string describing app for About tab"""
+        
         html = '''
         <style>
             body {
-                background-image: url("http://www.ria-ausa.org/wp-content/upLoads/2013/08/USA-American-Flag-Abstract-Wallpaper-HD.png");
+                background-image: url("http://www.mountairyhabitat.org/wp-content/uploads/2013/05/gray-background1.jpg");
             }
         </style>
-        <br>On this site you can find:<br><ul><li>a plot measuring the average 'certainty index' (degree of reliability of expressed information, also referred to as the modality) of given speeches,</li><li>frequency counts in plot and table form of the most common words in given speeches,</li><li>Haikus composed of the most common words in given speeches, and</li><li>a Markov chain composed of the most common phrases in given speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>.'''
+        <br>On this site you can find:<br><ul></li><li>frequency counts in plot and table form of the most common words in selected speeches,</li><li>Haikus composed of the most common words in selected speeches, and</li><li>a Markov chain composed of the most common phrases in selected speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>.'''
         return html
         
 if __name__ == '__main__':
-    app = MongoExample()
-    #app.launch(port=8000)
+    app = PresApp()
     app.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))

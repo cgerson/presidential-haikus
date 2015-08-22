@@ -196,7 +196,7 @@ class PresApp(server.App):
         """return pandas dataframe of most common words in speeches"""
         
         fdist = self.fDist(self.loadData(params))
-        max_freq = fdist.most_common(20)
+        max_freq = fdist.most_common(25)
         words_unzipped,count_unzipped = zip(*max_freq)
         f = [fdist.freq(w) for w in words_unzipped]
         z = zip(words_unzipped,count_unzipped,f)

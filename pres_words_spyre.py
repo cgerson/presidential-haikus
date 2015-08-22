@@ -86,12 +86,14 @@ class PresApp(server.App):
                     "id" : "update_data"},
                 {    "type" : "button",
 		     "id" : "button2",
-		     "label" : "refresh poetry"}]
+		     "label" : "refresh poetry"},
+                {    "type" : "hidden",
+		     "id" : "about"}]
 
     tabs = ["PlotWords","TableWords","Haiku","MarkovCheney","About"]
 
     outputs = [{ "type" : "plot",
-                    "id" : "plot1",
+                    "id" : "plot",
                     "control_id" : "update_data",
                     "tab" : "PlotWords"},
                 { "type" : "table",
@@ -100,15 +102,23 @@ class PresApp(server.App):
                     "tab" : "TableWords"},
                {"type" : "html",
 		"id" : "html2",
+		"control_id" : "update_data",
+		"tab" : "MarkovCheney"},
+               {"type" : "html",
+		"id" : "html2",
 		"control_id" : "button2",
 		"tab" : "MarkovCheney"},
+               {"type" : "html",
+		"id" : "html1",
+		"control_id" : "update_data",
+		"tab" : "Haiku"},
                {"type" : "html",
 		"id" : "html1",
 		"control_id" : "button2",
 		"tab" : "Haiku"},
                {"type" : "html",
 		"id" : "html3",
-		"control_id" : "update_data",
+		"control_id" : "about",
 		"tab" : "About"}]
 
         
@@ -131,11 +141,18 @@ class PresApp(server.App):
             text = i['text']
             filtered_words.extend(text)
 
-        
-        if '000' in filtered_words:
-            filtered_words.remove('000')
-        if '--' in filtered_words:
-            filtered_words.remove('--')
+
+        while True:
+            try:
+                filtered_words.remove("--")
+            except ValueError:
+                break
+        while True:
+            try:
+                filtered_words.remove("000")
+            except ValueError:
+                break
+            
         return filtered_words
 
     def fDist(self,filtered_words):
@@ -229,7 +246,7 @@ class PresApp(server.App):
         df.columns=['date','certainty(by_sent)','certainty(by_clause)','president']
         return df[['date','certainty(by_sent)','certainty(by_clause)']]
         
-    def plot1(self, params):
+    def getPlot(self, params):
         """return matplotlib figure of word frequency"""
         
         ct = self.speechCt(params)
@@ -360,7 +377,7 @@ class PresApp(server.App):
                 background-image: url("http://www.mountairyhabitat.org/wp-content/uploads/2013/05/gray-background1.jpg");
             }
         </style>
-        <br>On this site you can find:<br><ul></li><li>frequency counts in plot and table form of the most common words in selected speeches,</li><li>Haikus composed of the most common words in selected speeches, and</li><li>a Markov chain composed of the most common phrases in selected speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>.'''
+        <br>On this site you can find:<br><ul></li><li>frequency counts in plot and table form of the most common words in selected speeches,</li><li>Haikus composed of the most common words in selected speeches, and</li><li>a Markov chain composed of the most common phrases in selected speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>.<br><br><br><p><pre>Created by <a href="http://cgerson.github.io" target="_blank">Claire<a></pre>'''
         return html
         
 if __name__ == '__main__':

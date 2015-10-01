@@ -1,3 +1,3 @@
-This is an interactive web app to explore to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href = "http://www.presidency.ucsb.edu/" target="_blank">American Presidency Project's online archive</a>.
+This is an interactive web app to explore to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. Natural Language Processing was performed on every speech to extract probability distributions of words and phrases used by each president over time. The documents were acquired from the <a href = "http://www.presidency.ucsb.edu/" target="_blank">American Presidency Project's online archive</a>.
 
-Find the official app at http://presidentialspeeches.herokuapp.com/
+Find the live app at <a href = "http://presidentialspeeches.herokuapp.com/" target="_blank">presidentialspeeches.herokuapp.com</a>.

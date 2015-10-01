@@ -1,4 +1,6 @@
-from spyre import server #spyre
+#import sys
+#sys.path.append('./spyre')
+from spyre import server
 
 import os
 import pandas as pd
@@ -24,7 +26,7 @@ class PresApp(server.App):
     
     title = "Presidential Documents- Analysis"
 
-    gif = "President_Barack_Obama_net1.gif"
+    spinnerFile = "President_Barack_Obama_net1.gif"
     
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
@@ -141,7 +143,6 @@ class PresApp(server.App):
             text = i['text']
             filtered_words.extend(text)
 
-
         while True:
             try:
                 filtered_words.remove("--")
@@ -250,9 +251,10 @@ class PresApp(server.App):
         """return matplotlib figure of word frequency"""
         
         ct = self.speechCt(params)
+        
         speech = params['speech']
-        #if speech == "Inaugurals":
-        #    speech = "Inaugural"
+        if speech == "Inaugurals":
+            speech = "Inaugural" #to make title grammatically correct
             
         df = self.getData(params).set_index('words')
         df.sort(columns=['frequency'],ascending=True,inplace=True)
@@ -301,7 +303,7 @@ class PresApp(server.App):
         common_words,counts = zip(*fdist.most_common(20))
         random_word = np.random.choice(common_words)
         
-        def generate_model(cfdist, word, num=15):
+        def generate_model(cfdist, word, num=30):
             words = []
             for i in range(num):
                 words.append(word)
@@ -360,7 +362,7 @@ class PresApp(server.App):
         return "<br><p>{0}".format("<br><p>".join(haiku))
 
     def nsyl(self,w):
-        """return syllabel count for given word"""
+        """return syllable count for given word"""
         
         try: 
             result = [len(list(y for y in x if y[-1].isdigit())) for x in self.d[w]]

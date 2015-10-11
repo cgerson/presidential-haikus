@@ -26,7 +26,7 @@ class PresApp(server.App):
     
     title = "Presidential Documents- Analysis"
 
-    spinnerFile = "President_Barack_Obama_net1.gif"
+    spinnerFile = "President_Barack_Obama_net1.gif" #custom spinner image. not yet implemented by spyre
     
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
@@ -125,7 +125,7 @@ class PresApp(server.App):
 
         
     def loadData(self,params):
-        """return filtered words according to inputs"""
+        """return filtered words of speech according to speech and president selected"""
         
         self.president = params['president']
         self.speech = params['speech']
@@ -145,17 +145,19 @@ class PresApp(server.App):
 
         while True:
             try:
-                filtered_words.remove("--")
+                filtered_words.remove("--") #silly dashes
             except ValueError:
                 break
+            
         while True:
             try:
-                filtered_words.remove("000")
+                filtered_words.remove("000") #silly 000's
             except ValueError:
                 break
             
         return filtered_words
 
+    
     def fDist(self,filtered_words):
         """return frequency distribution using filtered_words from loadData"""
         
@@ -163,7 +165,8 @@ class PresApp(server.App):
         for word in filtered_words:
             fdist[word] += 1
         return fdist
-            
+
+    
     def speechCt(self,params):
         """return count of number of speeches for given president"""
         
@@ -177,14 +180,17 @@ class PresApp(server.App):
             pipeline_ct = [{"$match":{"name":self.president,"type":self.speech}},{"$group":{"_id":"type",
                                                               "count":{"$sum":1}}}]
 
-        ct = 0    
+        ct = 0
+        
         for i in self.col.aggregate(pipeline_ct):
             ct = i['count']
 
         return ct
 
+    
     def cDist(self,params):
-        """return conditional freq distribution using filtered_words from loadData"""
+        """return conditional freq distribution (based on part of speech) using filtered_words from loadData"""
+        
         president = params['president']
         speech = params['speech']
 
@@ -208,7 +214,8 @@ class PresApp(server.App):
         NN = MLEProbDist(cfdist.get("NN"))
         JJ = MLEProbDist(cfdist.get("JJ"))
 
-        return VB,NN,JJ
+        return VB,NN,JJ #return verbs, nouns, adjectives
+    
     
     def getData(self,params):
         """return pandas dataframe of most common words in speeches"""
@@ -222,11 +229,13 @@ class PresApp(server.App):
         df.columns = ['words','count','frequency']
         return df
 
+    
     def certaintyInd(self,params):
-        """returns dataframe of modality scores"""
+        """returns dataframe of modality scores (**currently not included in app)"""
         
         president = params['president']
         speech = params['speech']
+        
         if president == "All presidents":
             pipeline = [{"$match":{"type":speech}},
             {"$project": {"cert_sent":"$certainty","cert_phrases":"$certainty_phrases",
@@ -245,10 +254,12 @@ class PresApp(server.App):
             df = df[df['president']==president]
             
         df.columns=['date','certainty(by_sent)','certainty(by_clause)','president']
-        return df[['date','certainty(by_sent)','certainty(by_clause)']]
         
+        return df[['date','certainty(by_sent)','certainty(by_clause)']]
+
+    
     def getPlot(self, params):
-        """return matplotlib figure of word frequency"""
+        """return matplotlib figure of word frequency of speech(es)"""
         
         ct = self.speechCt(params)
         
@@ -269,8 +280,9 @@ class PresApp(server.App):
         fig.set_size_inches(18.5, 10.5)
         return fig
 
+    
     def plot2(self,params):
-        """return matplotlib figure of certainty index"""
+        """return matplotlib figure of certainty index (**currently not included in app)"""
         
         ct = self.speechCt(params)
         speech = params['speech']
@@ -290,9 +302,10 @@ class PresApp(server.App):
         fig.set_size_inches(18.5, 10.5)
 
         return fig
-        
+
+    
     def html2(self,params):
-        """return Markov chain string made fom words in selected speeches"""
+        """return Markov chain string made fom words in selected speeches, providing a short-hand topic analysis of speech(es)"""
         
         filtered_words = self.loadData(params)
         fdist = self.fDist(filtered_words)
@@ -312,9 +325,10 @@ class PresApp(server.App):
 
         html = "<br><p>{1}'s Ramblings:<br><br>{0}.<p>".format(" ".join(generate_model(cfd,random_word)),self.president.split()[0])
         return html
+
     
     def html1(self,params):
-        """return Haiku string made from selected speeches"""
+        """return Haiku string made from selected speech(es)"""
         
         VB,NN,JJ = self.cDist(params)
         
@@ -361,6 +375,7 @@ class PresApp(server.App):
         haiku = makeHaiku()
         return "<br><p>{0}".format("<br><p>".join(haiku))
 
+    
     def nsyl(self,w):
         """return syllable count for given word"""
         
@@ -370,6 +385,7 @@ class PresApp(server.App):
             result = [8] #so that it exceeds syllable limit and starts over
         return result
 
+    
     def html3(self,params):
         """return string describing app for About tab"""
         
@@ -381,7 +397,8 @@ class PresApp(server.App):
         </style>
         <br>On this site you can find:<br><ul></li><li>frequency counts in plot and table form of the most common words in selected speeches,</li><li>Haikus composed of the most common words in selected speeches, and</li><li>a Markov chain composed of the most common phrases in selected speeches</li></ul><br><p>This site provides an interactive platform to explore presidential Inaugural Addresses and State of the Union speeches, from George Washington to Barack Obama. The documents were acquired from the <a href='http://www.presidency.ucsb.edu/' target='_blank'>American Presidency Project's online archive</a>.<br><br><br><p><pre>Created by <a href="http://cgerson.github.io" target="_blank">Claire<a></pre>'''
         return html
-        
+
+    
 if __name__ == '__main__':
     app = PresApp()
     app.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))

@@ -26,7 +26,7 @@ class PresApp(server.App):
     
     title = "Presidential Documents- Analysis"
 
-    spinnerFile = "President_Barack_Obama_net1.gif" #custom spinner image. not yet implemented by spyre
+    spinnerFile = "President_Barack_Obama_net1.gif" #custom spinner image 
     
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
@@ -273,9 +273,9 @@ class PresApp(server.App):
         plt_obj.set_ylabel("Frequency in texts")
         plt_obj.tick_params(axis='both', which='major', labelsize=16)
         if ct > 1:
-            plt_obj.set_title("{0}: {1} {2} speeches".format(self.president,ct,speech))
+            plt_obj.set_title("{0}: Word Frequency for {1} {2} speeches".format(self.president,ct,speech))
         else:
-            plt_obj.set_title("{0}: {1} {2} speech".format(self.president,ct,speech))
+            plt_obj.set_title("{0}: Word Frequency for {1} {2} speech".format(self.president,ct,speech))
         fig = plt_obj.get_figure()
         fig.set_size_inches(18.5, 10.5)
         return fig

@@ -30,7 +30,7 @@ class PresApp(server.App):
     
     inputs = [{     "type":'dropdown',
                     "label": 'President', 
-                    "options" : [{"label": "All presidents", "value":"All presidents"},
+                    "options" : [#{"label": "All presidents", "value":"All presidents"},
                                  {"label": "Abraham Lincoln", "value":"Abraham Lincoln"},
                                  {"label": "Andrew Jackson", "value":"Andrew Jackson"},
                                  {"label": "Andrew Johnson", "value":"Andrew Johnson"},
@@ -124,7 +124,7 @@ class PresApp(server.App):
 		"tab" : "About"}]
 
         
-    def loadData(self,params):
+    def loadData(self,params,inaugurals=True):
         """return filtered words of speech according to speech and president selected"""
         
         self.president = params['president']
@@ -154,7 +154,7 @@ class PresApp(server.App):
                 filtered_words.remove("000") #silly 000's
             except ValueError:
                 break
-            
+
         return filtered_words
 
     
@@ -219,6 +219,9 @@ class PresApp(server.App):
     
     def getData(self,params):
         """return pandas dataframe of most common words in speeches"""
+
+        if self.speechCt(params) == 0:
+            params['speech'] = "SOU"
         
         fdist = self.fDist(self.loadData(params))
         max_freq = fdist.most_common(25)
@@ -262,6 +265,9 @@ class PresApp(server.App):
         """return matplotlib figure of word frequency of speech(es)"""
         
         ct = self.speechCt(params)
+        add = ""
+        if ct == 0:
+            add = "(showing results for SOU speeches instead)"
         
         speech = params['speech']
         if speech == "Inaugurals":
@@ -272,10 +278,13 @@ class PresApp(server.App):
         plt_obj = df[['frequency']].plot(kind='barh',legend=True)
         plt_obj.set_ylabel("Frequency in texts")
         plt_obj.tick_params(axis='both', which='major', labelsize=16)
-        if ct > 1:
-            plt_obj.set_title("{0}: Word Frequency for {1} {2} speeches".format(self.president,ct,speech))
+
+        #format title
+        if ct > 1 or ct==0:
+            plt_obj.set_title("{0}: Word Frequency for {1} {2} speeches {3}".format(self.president,ct,speech,add))
         else:
             plt_obj.set_title("{0}: Word Frequency for {1} {2} speech".format(self.president,ct,speech))
+
         fig = plt_obj.get_figure()
         fig.set_size_inches(18.5, 10.5)
         return fig

@@ -1,5 +1,4 @@
-DataSpyre==0.2.0
 matplotlib==1.4.3
 nltk==3.0.4
 pymongo==3.0.3
-numpy==1.9.2
+DataSpyre==0.2.0
